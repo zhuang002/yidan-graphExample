@@ -1,3 +1,6 @@
+import sys
+
+
 class ArrayGraph:
     def __init__(self):
         self.data = []
@@ -31,6 +34,45 @@ class ArrayGraph:
                 if self.data[i][j] != 0:
                     ret += str(i) + " " + str(j) + " " + str(self.data[i][j]) + "\r\n"
         return ret
+
+    def get_shortest_node(self, list, distances):
+        min = sys.maxsize
+        min_node = None
+        for node in list:
+            if distances[node] < min:
+                min = distances[node]
+                min_node = node
+        return min_node
+
+    def get_neighbours(self, node):
+        neighbours = []
+        for i in range(self.nodes):
+            if self.data[node][i]>0:
+                neighbours.append(i)
+        return neighbours
+
+
+    def get_shortest_distance(self, node1, node2):
+        completed = [False]*self.nodes
+        distances = [-1]*self.nodes
+
+        current = [node1]
+        distances[node1] = 0
+        while current:
+            shortest_node = self.get_shortest_node(current, distances)
+            neighbours = self.get_neighbours(shortest_node)
+            for node in neighbours:
+                if not completed[node]:
+                    new_distance = distances[shortest_node]+self.data[shortest_node][node];
+                    if distances[node] == -1:
+                        distances[node] = new_distance
+                    elif distances[node] > new_distance:
+                        distances[node] = new_distance
+                    current.append(node)
+            current.remove(shortest_node)
+            completed[shortest_node] = True
+        return distances[node2]
+
 
 
 class Path:
@@ -103,7 +145,7 @@ class NodeGraph:
         return ret
 
 
-
+'''
 graph = ArrayGraph()
 graph.read_graph_directional()
 print(graph)
@@ -119,3 +161,10 @@ print(graph)
 graph = NodeGraph()
 graph.read_graph_directional()
 print(graph)
+'''
+
+graph = ArrayGraph()
+graph.read_graph_bidirectional()
+node1, node2 = map(int, input("Please input node1, node2:").split(' '))
+distance = graph.get_shortest_distance(node1,node2)
+print('Shortest distance:'+str(distance))
