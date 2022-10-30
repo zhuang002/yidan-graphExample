@@ -1,3 +1,4 @@
+import copy
 import sys
 
 
@@ -106,13 +107,59 @@ class PathGraph:
             start_node = self.all_nodes[start]
             end_node = self.all_nodes[end]
             path = Path(start_node, end_node, length)
-            self.all_paths.append(path)
+            self.all_paths[i] = path
 
     def __str__(self):
         ret = ""
-        for i in range(self.all_paths):
-            ret += "%d %d %d \r\n" % (self.all_paths[i].start, self.all_paths[i].end, self.all_paths[i].length)
+        for path in self.all_paths:
+            ret += "%d %d %d \r\n" % (path.start.id, path.end.id, path.length)
         return ret
+
+    def getMinimumConstructTree(self):
+        paths = copy.copy(self.all_paths)
+        paths.sort(key=lambda x: x.length)
+
+        subtree_set = []  # contains subtree. each subtree contains connected nodes
+
+        construct_tree = PathGraph()
+        construct_tree.all_nodes = []
+        construct_tree.all_paths = []
+
+        for path in paths:
+            subtree1 = self.get_subtree_of_node(subtree_set, path.start)
+            subtree2 = self.get_subtree_of_node(subtree_set, path.end)
+            if subtree1:
+                if subtree2:   # subtrees of both nodes are found.
+                    if subtree1 != subtree2:
+                        subtree_set.remove(subtree1)
+                        subtree_set.remove(subtree2)
+                        subtree_set.append(subtree1.union(subtree2))
+                        construct_tree.all_paths.append(path)
+                else:  # subtree1 is found, subtree2 is not found
+                    subtree1.add(path.end.id)
+                    construct_tree.all_paths.append(path)
+                    construct_tree.all_nodes.append(path.end)
+            else:
+                if subtree2:  # subtree1 is not found, subtree2 is found
+                    subtree2.add(path.start.id)
+                    construct_tree.all_paths.append(path)
+                    construct_tree.all_nodes.append(path.start)
+                else:  # both subnodes are not found
+                    subtree = {path.start.id, path.end.id}
+                    subtree_set.append(subtree)
+                    construct_tree.all_nodes.extend([path.start, path.end])
+                    construct_tree.all_paths.append(path)
+            if len(subtree_set) == 1 and len(construct_tree.all_nodes) == len(self.all_nodes):
+                break
+
+        construct_tree.all_nodes.extend(self.all_nodes)
+        return construct_tree
+
+    def get_subtree_of_node(self, subtree_set, node):
+        for subtree in subtree_set:
+            if node.id in subtree:
+                return subtree
+        return None
 
 
 class Node1:
@@ -161,10 +208,17 @@ print(graph)
 graph = NodeGraph()
 graph.read_graph_directional()
 print(graph)
-'''
 
 graph = ArrayGraph()
 graph.read_graph_bidirectional()
 node1, node2 = map(int, input("Please input node1, node2:").split(' '))
 distance = graph.get_shortest_distance(node1,node2)
 print('Shortest distance:'+str(distance))
+'''
+
+
+graph = PathGraph()
+graph.read_graph_directional()
+tree = graph.getMinimumConstructTree()
+print(tree)
+
